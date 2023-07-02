@@ -85,14 +85,7 @@ func Tokenize(src []rune, cursor int) (int, Token, error) {
 
 	// Check for an identifier
 	if isValidChar(sym) {
-		identifier := []rune{sym}
-		cursor++
-		for isValidChar(src[cursor]) || unicode.IsDigit(sym) {
-			identifier = append(identifier, src[cursor])
-			cursor++
-		}
-
-		return cursor, Token{value: string(identifier), t: Id}, nil
+		return extractIdentifier(cursor, src)
 	}
 
 	return cursor, Token{}, ErrInvalidSymbol
@@ -141,6 +134,26 @@ func extractNumber(cursor int, src []rune) (int, Token, error) {
 	}
 
 	return cursor, Token{value: string(number), t: Int}, nil
+}
+
+// extractIdentifier - helper func for lexing identifiers
+func extractIdentifier(cursor int, src []rune) (int, Token, error) {
+	id := []rune{src[cursor]}
+	cursor++
+	if cursor >= len(src) {
+		return cursor, Token{}, ErrEndOfInput
+	}
+
+	for isValidChar(src[cursor]) || unicode.IsDigit(src[cursor]) {
+		id = append(id, src[cursor])
+
+		cursor++
+		if cursor >= len(src) {
+			return cursor, Token{}, ErrEndOfInput
+		}
+	}
+
+	return cursor, Token{value: string(id), t: Id}, nil
 }
 
 // isValidChar - predicate for checking a valid identifier's symbol
