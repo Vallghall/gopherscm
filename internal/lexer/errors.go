@@ -3,7 +3,8 @@ package lexer
 import "errors"
 
 var (
-	ErrCursorOutOfRange            = errors.New("cursor is out of range")
+	// ErrEndOfInput - signals of unexpected end of input
+	ErrEndOfInput                  = errors.New("cursor is out of range")
 	ErrMissingMatchingDoubleQuotes = errors.New("missing matching double quotes")
 	ErrInvalidIntegerLiteral       = errors.New("invalid integer literal")
 	ErrInvalidSymbol               = errors.New("invalid symbol")
