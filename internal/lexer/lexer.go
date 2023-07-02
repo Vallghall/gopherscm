@@ -5,6 +5,13 @@ import (
 	"unicode"
 )
 
+// TODO: add meta to cursor processing for error positioning
+// meta - stores meta for analytics and error positioning
+// type meta struct {
+// 	line int
+// 	pos  int
+// }
+
 // Lex transforms input slice of symbols into slice of Scheme tokens
 func Lex(src []rune) ([]Token, error) {
 	ts := make([]Token, 0)
