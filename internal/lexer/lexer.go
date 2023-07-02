@@ -12,21 +12,18 @@ func Lex(src []rune) ([]Token, error) {
 	inputLength := len(src)
 	cursor := 0
 
-	skipWhiteSpaces := func() {
-		if cursor < inputLength {
-			for unicode.IsSpace(src[cursor]) {
-				cursor++
-			}
-		}
-	}
-
 	var token Token
 	var err error
 	parenCount := 0
-	for {
-		skipWhiteSpaces()
+	for cursor < inputLength {
+		old := cursor
+		cursor = skipSingleLineComment(cursor, src)
+		cursor = skipWhiteSpaces(cursor, src)
+		if old != cursor {
+			continue // recheck whitespaces and comments after theit deletion
+		}
 
-		cursor, token, err = Tokenize(src, cursor)
+		cursor, token, err = Tokenize(cursor, src)
 		if err != nil {
 			if errors.Is(err, ErrEndOfInput) {
 				break
@@ -46,10 +43,6 @@ func Lex(src []rune) ([]Token, error) {
 		if parenCount < 0 {
 			return nil, ErrFreeClosingParantesis
 		}
-
-		if cursor >= inputLength {
-			break
-		}
 	}
 
 	if parenCount > 0 {
@@ -60,7 +53,7 @@ func Lex(src []rune) ([]Token, error) {
 }
 
 // Tokenize - Extracts token from rune sequence
-func Tokenize(src []rune, cursor int) (int, Token, error) {
+func Tokenize(cursor int, src []rune) (int, Token, error) {
 	if cursor >= len(src) {
 		return cursor, Token{}, ErrEndOfInput
 	}
@@ -89,6 +82,35 @@ func Tokenize(src []rune, cursor int) (int, Token, error) {
 	}
 
 	return cursor, Token{}, ErrInvalidSymbol
+}
+
+// skipSingleLineComment
+func skipSingleLineComment(cursor int, src []rune) int {
+	inputLength := len(src)
+	if src[cursor] == ';' {
+		for src[cursor] != '\n' {
+			cursor++
+			if cursor >= inputLength {
+				return cursor
+			}
+		}
+		cursor++
+	}
+
+	return cursor
+}
+
+// skipWhitespaces - helper func for ommiting whitespaces
+func skipWhiteSpaces(cursor int, src []rune) int {
+	inputLength := len(src)
+	for unicode.IsSpace(src[cursor]) {
+		cursor++
+		if cursor >= inputLength {
+			return cursor
+		}
+	}
+
+	return cursor
 }
 
 // extractString - helper func for extracting String token
@@ -127,6 +149,11 @@ func extractNumber(cursor int, src []rune) (int, Token, error) {
 		if cursor >= len(src) {
 			return cursor, Token{}, ErrEndOfInput
 		}
+	}
+
+	cursor = skipSingleLineComment(cursor, src)
+	if cursor >= len(src) {
+		return cursor, Token{}, ErrEndOfInput
 	}
 
 	if sym := src[cursor]; !(unicode.IsSpace(sym) || sym == ')') {

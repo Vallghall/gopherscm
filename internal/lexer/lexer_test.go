@@ -73,6 +73,33 @@ func TestLex(t *testing.T) {
 			err,
 			ErrFreeClosingParantesis,
 			"expected: %v\ngot: %v",
+			ErrFreeClosingParantesis, err)
+
+		_, err = Lex([]rune("((+ 1 2 3)"))
+		require.ErrorIsf(
+			t,
+			err,
+			ErrMissingClosingParenthesis,
+			"expected: %v\ngot: %v",
 			ErrMissingClosingParenthesis, err)
+	})
+
+	t.Run("single line comments", func(t *testing.T) {
+		ts, err := Lex([]rune(`
+		;; this is a comment
+		(+ 1 ; 	comment
+		   2; 	comment again
+		   3) ; also a comment
+		`))
+		require.NoErrorf(t, err, "expected no err, got: %v", err)
+
+		require.Equal(t, []Token{
+			{value: "(", t: Syntax},
+			{value: "+", t: Id},
+			{value: "1", t: Int},
+			{value: "2", t: Int},
+			{value: "3", t: Int},
+			{value: ")", t: Syntax},
+		}, ts)
 	})
 }
