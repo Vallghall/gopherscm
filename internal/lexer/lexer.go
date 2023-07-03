@@ -2,13 +2,14 @@ package lexer
 
 import (
 	"errors"
+	"github.com/Vallghall/gopherscm/internal/types"
 	"unicode"
 )
 
-// Lex transforms input slice of symbols into slice of Scheme tokens
+// Lex transforms input slice of symbols into slice of valid Scheme tokens
 func Lex(src []rune) (TokenStream, error) {
 	ts := make(TokenStream, 0)
-	m := newMeta()
+	m := types.NewMeta()
 	inputLength := len(src)
 	cursor := 0
 
@@ -22,7 +23,7 @@ func Lex(src []rune) (TokenStream, error) {
 		cursor = skipSingleLineComment(cursor, src, m)
 		cursor = skipWhiteSpaces(cursor, src, m)
 		if old != cursor {
-			continue // recheck whitespaces and comments after theit deletion
+			continue // recheck whitespaces and comments after their deletion
 		}
 
 		cursor, token, err = Tokenize(cursor, src, m)
@@ -55,7 +56,7 @@ func Lex(src []rune) (TokenStream, error) {
 }
 
 // Tokenize - Extracts token from rune sequence
-func Tokenize(cursor int, src []rune, m *meta) (int, *Token, error) {
+func Tokenize(cursor int, src []rune, m *types.Meta) (int, *Token, error) {
 	if cursor >= len(src) {
 		return cursor, nil, ErrEndOfInput
 	}
@@ -64,8 +65,9 @@ func Tokenize(cursor int, src []rune, m *meta) (int, *Token, error) {
 
 	// '(' and ')' are the only syntax tokens
 	if sym == '(' || sym == ')' {
-		m.inc()
-		return cursor + 1, NewToken(Syntax, m, sym), nil
+		t := tokenFromMeta(m)
+		m.Inc()
+		return cursor + 1, t.Set(Syntax, sym), nil
 	}
 
 	// parsing string literal like "foo"
@@ -88,25 +90,25 @@ func Tokenize(cursor int, src []rune, m *meta) (int, *Token, error) {
 }
 
 // skipSingleLineComment
-func skipSingleLineComment(cursor int, src []rune, m *meta) int {
+func skipSingleLineComment(cursor int, src []rune, m *types.Meta) int {
 	inputLength := len(src)
 	if src[cursor] == ';' {
 		for src[cursor] != '\n' {
-			m.inc()
+			m.Inc()
 			cursor++
 			if cursor >= inputLength {
 				return cursor
 			}
 		}
-		m.newLine()
+		m.NewLine()
 		cursor++
 	}
 
 	return cursor
 }
 
-// skipWhitespaces - helper func for ommiting whitespaces
-func skipWhiteSpaces(cursor int, src []rune, m *meta) int {
+// skipWhitespaces - helper func for omitting whitespaces
+func skipWhiteSpaces(cursor int, src []rune, m *types.Meta) int {
 	inputLength := len(src)
 	for unicode.IsSpace(src[cursor]) {
 		cursor++
@@ -114,7 +116,7 @@ func skipWhiteSpaces(cursor int, src []rune, m *meta) int {
 			return cursor
 		}
 
-		m.incNL(src[cursor])
+		m.IncNL(src[cursor])
 	}
 
 	return cursor
@@ -123,12 +125,13 @@ func skipWhiteSpaces(cursor int, src []rune, m *meta) int {
 // extractString - helper func for extracting String token
 // FIXME: fix so that only single-line strings are allowed
 // TODO: add support for escape sequences
-func extractString(cursor int, src []rune, m *meta) (int, *Token, error) {
+func extractString(cursor int, src []rune, m *types.Meta) (int, *Token, error) {
+	t := tokenFromMeta(m)
 	cursor++ // move forward from quote
 	if cursor >= len(src) {
 		return cursor, nil, ErrEndOfInput
 	}
-	m.inc()
+	m.Inc()
 
 	str := make([]rune, 0)
 	for sym := src[cursor]; sym != '"'; sym = src[cursor] {
@@ -138,23 +141,24 @@ func extractString(cursor int, src []rune, m *meta) (int, *Token, error) {
 			return cursor, nil, ErrMissingMatchingDoubleQuotes
 		}
 
-		m.inc()
+		m.Inc()
 	}
 
-	m.inc()
+	m.Inc()
 	cursor++
-	return cursor, NewToken(String, m, str...), nil
+	return cursor, t.Set(String, str...), nil
 }
 
 // extractNumber - helper func for extracting an Int token
 // TODO: add floating point token support
-func extractNumber(cursor int, src []rune, m *meta) (int, *Token, error) {
+func extractNumber(cursor int, src []rune, m *types.Meta) (int, *Token, error) {
+	t := tokenFromMeta(m)
 	number := []rune{src[cursor]}
 	cursor++
 	if cursor >= len(src) {
 		return cursor, nil, ErrEndOfInput
 	}
-	m.inc()
+	m.Inc()
 
 	for unicode.IsDigit(src[cursor]) {
 		number = append(number, src[cursor])
@@ -163,7 +167,7 @@ func extractNumber(cursor int, src []rune, m *meta) (int, *Token, error) {
 			return cursor, nil, ErrEndOfInput
 		}
 
-		m.inc()
+		m.Inc()
 	}
 
 	cursor = skipSingleLineComment(cursor, src, m)
@@ -175,17 +179,18 @@ func extractNumber(cursor int, src []rune, m *meta) (int, *Token, error) {
 		return cursor, nil, ErrInvalidIntegerLiteral
 	}
 
-	return cursor, NewToken(Int, m, number...), nil
+	return cursor, t.Set(Int, number...), nil
 }
 
 // extractIdentifier - helper func for lexing identifiers
-func extractIdentifier(cursor int, src []rune, m *meta) (int, *Token, error) {
+func extractIdentifier(cursor int, src []rune, m *types.Meta) (int, *Token, error) {
+	t := tokenFromMeta(m)
 	id := []rune{src[cursor]}
 	cursor++
 	if cursor >= len(src) {
 		return cursor, nil, ErrEndOfInput
 	}
-	m.incNL(src[cursor])
+	m.IncNL(src[cursor])
 
 	for isValidChar(src[cursor]) || unicode.IsDigit(src[cursor]) {
 		id = append(id, src[cursor])
@@ -194,10 +199,10 @@ func extractIdentifier(cursor int, src []rune, m *meta) (int, *Token, error) {
 		if cursor >= len(src) {
 			return cursor, nil, ErrEndOfInput
 		}
-		m.incNL(src[cursor])
+		m.IncNL(src[cursor])
 	}
 
-	return cursor, NewToken(Id, m, id...), nil
+	return cursor, t.Set(Id, id...), nil
 }
 
 // isValidChar - predicate for checking a valid identifier's symbol
