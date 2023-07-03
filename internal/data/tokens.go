@@ -1,5 +1,7 @@
 package data
 
+import "encoding/json"
+
 // TokenStream - alias
 type TokenStream []*Token
 
@@ -23,6 +25,18 @@ func (tp *Token) Type() Type {
 // Meta - token meta getter
 func (tp *Token) Meta() *Meta {
 	return tp.meta
+}
+
+func (tp Token) MarshalJSON() ([]byte, error) {
+	obj := &struct {
+		Value string `json:"value"`
+		T     Type   `json:"type"`
+	}{
+		Value: tp.value,
+		T:     tp.t,
+	}
+
+	return json.Marshal(obj)
 }
 
 // NewToken - token constructor from value and token type

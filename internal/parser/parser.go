@@ -4,17 +4,40 @@ import (
 	"github.com/Vallghall/gopherscm/internal/data"
 )
 
-// TODO: make parser; make ast interface in
-// a new package for decoupling from parser package
-
-// ast - abstract syntax tree.
-// Represents the program structure
-type ast struct {
-	car *ast   // tree root node
-	cdr []*ast // node leaves
-}
+const (
+	lParen = "("
+	rParen = ")"
+)
 
 // Parse - parsing token stream into AST
-func Parse(ts []data.Token) *ast {
-	return nil // TODO: implement!
+func Parse(ts data.TokenStream) *data.AST {
+	ast := data.ASTRoot()
+	idx := 0
+	_ = parse(ast, ts, idx)
+	return ast
+}
+
+func parse(ast *data.AST, ts data.TokenStream, idx int) int {
+	for idx < len(ts) {
+		token := ts[idx]
+		if token.Type() == data.Syntax {
+			idx++
+			subtree := ast.Add(ts[idx])
+
+			if token.Value() == lParen {
+				idx = parse(subtree, ts, idx+1)
+				continue
+			}
+
+			if token.Value() == rParen {
+				return idx + 1
+			}
+
+		}
+
+		idx++
+		ast.Add(token)
+	}
+
+	return idx
 }
