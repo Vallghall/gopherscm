@@ -10,18 +10,19 @@ import (
 // 	return value
 // }
 
+// FIXME: make other tests support meta-info too
 func TestLex(t *testing.T) {
 
 	t.Run("id with a few ints", func(t *testing.T) {
 		ts, err := Lex([]rune("(+ 1 2)"))
 		require.NoErrorf(t, err, "expected no err, got: %v", err)
 
-		require.Equal(t, []Token{
-			{value: "(", t: Syntax},
-			{value: "+", t: Id},
-			{value: "1", t: Int},
-			{value: "2", t: Int},
-			{value: ")", t: Syntax},
+		require.Equal(t, TokenStream{
+			{value: "(", t: Syntax, line: 1, pos: 1},
+			{value: "+", t: Id, line: 1, pos: 2},
+			{value: "1", t: Int, line: 1, pos: 4},
+			{value: "2", t: Int, line: 1, pos: 6},
+			{value: ")", t: Syntax, line: 1, pos: 7},
 		}, ts)
 	})
 
@@ -29,7 +30,7 @@ func TestLex(t *testing.T) {
 		ts, err := Lex([]rune(`(display "Hello")`))
 		require.NoErrorf(t, err, "expected no err, got: %v", err)
 
-		require.Equal(t, []Token{
+		require.Equal(t, TokenStream{
 			{value: "(", t: Syntax},
 			{value: "display", t: Id},
 			{value: "Hello", t: String},
@@ -41,7 +42,7 @@ func TestLex(t *testing.T) {
 		ts, err := Lex([]rune("(cons 1 (cons 2 (cons 3 nil)))"))
 		require.NoErrorf(t, err, "expected no err, got: %v", err)
 
-		require.Equal(t, []Token{
+		require.Equal(t, TokenStream{
 			{value: "(", t: Syntax},
 			{value: "cons", t: Id},
 			{value: "1", t: Int},
@@ -93,7 +94,7 @@ func TestLex(t *testing.T) {
 		`))
 		require.NoErrorf(t, err, "expected no err, got: %v", err)
 
-		require.Equal(t, []Token{
+		require.Equal(t, TokenStream{
 			{value: "(", t: Syntax},
 			{value: "+", t: Id},
 			{value: "1", t: Int},
