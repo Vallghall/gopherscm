@@ -1,6 +1,7 @@
 package lexer
 
 import (
+	"github.com/Vallghall/gopherscm/internal/data"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -15,37 +16,36 @@ func TestLex(t *testing.T) {
 	t.Run("id with a few ints", func(t *testing.T) {
 		ts, err := Lex([]rune("(+ 1 2)"))
 		require.NoErrorf(t, err, "expected no err, got: %v", err)
-		expected := TokenStream{
-			{value: "(", t: Syntax},
-			{value: "+", t: Id},
-			{value: "1", t: Int},
-			{value: "2", t: Int},
-			{value: ")", t: Syntax},
+		expected := data.TokenStream{
+			data.NewToken("(", data.Syntax),
+			data.NewToken("+", data.Id),
+			data.NewToken("1", data.Int),
+			data.NewToken("2", data.Int),
+			data.NewToken(")", data.Syntax),
 		}
-
 		require.Equal(t, len(expected), len(ts))
 
 		for i, tkn := range ts {
-			require.Equal(t, tkn.t, expected[i].t)
-			require.Equal(t, tkn.value, expected[i].value)
+			require.Equal(t, tkn.Type(), expected[i].Type())
+			require.Equal(t, tkn.Value(), expected[i].Value())
 		}
 	})
 
 	t.Run("string tokenizing", func(t *testing.T) {
 		ts, err := Lex([]rune(`(display "Hello")`))
 		require.NoErrorf(t, err, "expected no err, got: %v", err)
-		expected := TokenStream{
-			{value: "(", t: Syntax},
-			{value: "display", t: Id},
-			{value: "Hello", t: String},
-			{value: ")", t: Syntax},
+		expected := data.TokenStream{
+			data.NewToken("(", data.Syntax),
+			data.NewToken("display", data.Id),
+			data.NewToken("Hello", data.String),
+			data.NewToken(")", data.Syntax),
 		}
 
 		require.Equal(t, len(expected), len(ts))
 
 		for i, tkn := range ts {
-			require.Equal(t, tkn.t, expected[i].t)
-			require.Equal(t, tkn.value, expected[i].value)
+			require.Equal(t, tkn.Type(), expected[i].Type())
+			require.Equal(t, tkn.Value(), expected[i].Value())
 		}
 	})
 
@@ -53,27 +53,27 @@ func TestLex(t *testing.T) {
 		ts, err := Lex([]rune("(cons 1 (cons 2 (cons 3 nil)))"))
 		require.NoErrorf(t, err, "expected no err, got: %v", err)
 
-		expected := TokenStream{
-			{value: "(", t: Syntax},
-			{value: "cons", t: Id},
-			{value: "1", t: Int},
-			{value: "(", t: Syntax},
-			{value: "cons", t: Id},
-			{value: "2", t: Int},
-			{value: "(", t: Syntax},
-			{value: "cons", t: Id},
-			{value: "3", t: Int},
-			{value: "nil", t: Id},
-			{value: ")", t: Syntax},
-			{value: ")", t: Syntax},
-			{value: ")", t: Syntax},
+		expected := data.TokenStream{
+			data.NewToken("(", data.Syntax),
+			data.NewToken("cons", data.Id),
+			data.NewToken("1", data.Int),
+			data.NewToken("(", data.Syntax),
+			data.NewToken("cons", data.Id),
+			data.NewToken("2", data.Int),
+			data.NewToken("(", data.Syntax),
+			data.NewToken("cons", data.Id),
+			data.NewToken("3", data.Int),
+			data.NewToken("nil", data.Id),
+			data.NewToken(")", data.Syntax),
+			data.NewToken(")", data.Syntax),
+			data.NewToken(")", data.Syntax),
 		}
 
 		require.Equal(t, len(expected), len(ts))
 
 		for i, tkn := range ts {
-			require.Equal(t, tkn.t, expected[i].t)
-			require.Equal(t, tkn.value, expected[i].value)
+			require.Equal(t, tkn.Type(), expected[i].Type())
+			require.Equal(t, tkn.Value(), expected[i].Value())
 		}
 	})
 
@@ -112,20 +112,20 @@ func TestLex(t *testing.T) {
 		`))
 		require.NoErrorf(t, err, "expected no err, got: %v", err)
 
-		expected := TokenStream{
-			{value: "(", t: Syntax},
-			{value: "+", t: Id},
-			{value: "1", t: Int},
-			{value: "2", t: Int},
-			{value: "3", t: Int},
-			{value: ")", t: Syntax},
+		expected := data.TokenStream{
+			data.NewToken("(", data.Syntax),
+			data.NewToken("+", data.Id),
+			data.NewToken("1", data.Int),
+			data.NewToken("2", data.Int),
+			data.NewToken("3", data.Int),
+			data.NewToken(")", data.Syntax),
 		}
 
 		require.Equal(t, len(expected), len(ts))
 
 		for i, tkn := range ts {
-			require.Equal(t, tkn.t, expected[i].t)
-			require.Equal(t, tkn.value, expected[i].value)
+			require.Equal(t, tkn.Type(), expected[i].Type())
+			require.Equal(t, tkn.Value(), expected[i].Value())
 		}
 	})
 }

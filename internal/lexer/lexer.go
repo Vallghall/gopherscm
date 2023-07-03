@@ -2,18 +2,18 @@ package lexer
 
 import (
 	"errors"
-	"github.com/Vallghall/gopherscm/internal/types"
+	"github.com/Vallghall/gopherscm/internal/data"
 	"unicode"
 )
 
 // Lex transforms input slice of symbols into slice of valid Scheme tokens
-func Lex(src []rune) (TokenStream, error) {
-	ts := make(TokenStream, 0)
-	m := types.NewMeta()
+func Lex(src []rune) (data.TokenStream, error) {
+	ts := make(data.TokenStream, 0)
+	m := data.NewMeta()
 	inputLength := len(src)
 	cursor := 0
 
-	var token *Token
+	var token *data.Token
 	var err error
 	parenCount := 0
 
@@ -35,8 +35,8 @@ func Lex(src []rune) (TokenStream, error) {
 		}
 
 		ts = append(ts, token)
-		if token.t == Syntax {
-			if token.value == "(" {
+		if token.Type() == data.Syntax {
+			if token.Value() == "(" {
 				parenCount++
 			} else {
 				parenCount--
@@ -56,7 +56,7 @@ func Lex(src []rune) (TokenStream, error) {
 }
 
 // Tokenize - Extracts token from rune sequence
-func Tokenize(cursor int, src []rune, m *types.Meta) (int, *Token, error) {
+func Tokenize(cursor int, src []rune, m *data.Meta) (int, *data.Token, error) {
 	if cursor >= len(src) {
 		return cursor, nil, ErrEndOfInput
 	}
@@ -65,9 +65,9 @@ func Tokenize(cursor int, src []rune, m *types.Meta) (int, *Token, error) {
 
 	// '(' and ')' are the only syntax tokens
 	if sym == '(' || sym == ')' {
-		t := tokenFromMeta(m)
+		t := data.TokenFromMeta(m)
 		m.Inc()
-		return cursor + 1, t.Set(Syntax, sym), nil
+		return cursor + 1, t.Set(data.Syntax, sym), nil
 	}
 
 	// parsing string literal like "foo"
@@ -90,7 +90,7 @@ func Tokenize(cursor int, src []rune, m *types.Meta) (int, *Token, error) {
 }
 
 // skipSingleLineComment
-func skipSingleLineComment(cursor int, src []rune, m *types.Meta) int {
+func skipSingleLineComment(cursor int, src []rune, m *data.Meta) int {
 	inputLength := len(src)
 	if src[cursor] == ';' {
 		for src[cursor] != '\n' {
@@ -108,7 +108,7 @@ func skipSingleLineComment(cursor int, src []rune, m *types.Meta) int {
 }
 
 // skipWhitespaces - helper func for omitting whitespaces
-func skipWhiteSpaces(cursor int, src []rune, m *types.Meta) int {
+func skipWhiteSpaces(cursor int, src []rune, m *data.Meta) int {
 	inputLength := len(src)
 	for unicode.IsSpace(src[cursor]) {
 		cursor++
@@ -125,8 +125,8 @@ func skipWhiteSpaces(cursor int, src []rune, m *types.Meta) int {
 // extractString - helper func for extracting String token
 // FIXME: fix so that only single-line strings are allowed
 // TODO: add support for escape sequences
-func extractString(cursor int, src []rune, m *types.Meta) (int, *Token, error) {
-	t := tokenFromMeta(m)
+func extractString(cursor int, src []rune, m *data.Meta) (int, *data.Token, error) {
+	t := data.TokenFromMeta(m)
 	cursor++ // move forward from quote
 	if cursor >= len(src) {
 		return cursor, nil, ErrEndOfInput
@@ -146,13 +146,13 @@ func extractString(cursor int, src []rune, m *types.Meta) (int, *Token, error) {
 
 	m.Inc()
 	cursor++
-	return cursor, t.Set(String, str...), nil
+	return cursor, t.Set(data.String, str...), nil
 }
 
 // extractNumber - helper func for extracting an Int token
 // TODO: add floating point token support
-func extractNumber(cursor int, src []rune, m *types.Meta) (int, *Token, error) {
-	t := tokenFromMeta(m)
+func extractNumber(cursor int, src []rune, m *data.Meta) (int, *data.Token, error) {
+	t := data.TokenFromMeta(m)
 	number := []rune{src[cursor]}
 	cursor++
 	if cursor >= len(src) {
@@ -179,12 +179,12 @@ func extractNumber(cursor int, src []rune, m *types.Meta) (int, *Token, error) {
 		return cursor, nil, ErrInvalidIntegerLiteral
 	}
 
-	return cursor, t.Set(Int, number...), nil
+	return cursor, t.Set(data.Int, number...), nil
 }
 
 // extractIdentifier - helper func for lexing identifiers
-func extractIdentifier(cursor int, src []rune, m *types.Meta) (int, *Token, error) {
-	t := tokenFromMeta(m)
+func extractIdentifier(cursor int, src []rune, m *data.Meta) (int, *data.Token, error) {
+	t := data.TokenFromMeta(m)
 	id := []rune{src[cursor]}
 	cursor++
 	if cursor >= len(src) {
@@ -202,7 +202,7 @@ func extractIdentifier(cursor int, src []rune, m *types.Meta) (int, *Token, erro
 		m.IncNL(src[cursor])
 	}
 
-	return cursor, t.Set(Id, id...), nil
+	return cursor, t.Set(data.Id, id...), nil
 }
 
 // isValidChar - predicate for checking a valid identifier's symbol

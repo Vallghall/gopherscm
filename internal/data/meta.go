@@ -1,4 +1,4 @@
-package types
+package data
 
 // TODO: Add tests for meta methods
 
