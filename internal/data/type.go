@@ -16,6 +16,7 @@ const (
 	Syntax Type = iota
 	Id
 	Int
+	Float
 	String
 )
 

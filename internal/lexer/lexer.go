@@ -124,7 +124,6 @@ func skipWhiteSpaces(cursor int, src []rune, m *data.Meta) int {
 }
 
 // extractString - helper func for extracting String token
-// FIXME: fix so that only single-line strings are allowed
 // TODO: add support for escape sequences
 func extractString(cursor int, src []rune, m *data.Meta) (int, *data.Token, error) {
 	t := data.TokenFromMeta(m)
@@ -136,6 +135,10 @@ func extractString(cursor int, src []rune, m *data.Meta) (int, *data.Token, erro
 
 	str := make([]rune, 0)
 	for sym := src[cursor]; sym != '"'; sym = src[cursor] {
+		if sym == '\n' {
+			return cursor, nil, ErrUnexpectedLineBreak
+		}
+
 		str = append(str, sym)
 		cursor++
 		if cursor >= len(src) {
@@ -151,9 +154,10 @@ func extractString(cursor int, src []rune, m *data.Meta) (int, *data.Token, erro
 }
 
 // extractNumber - helper func for extracting an Int token
-// TODO: add floating point token support
+// TODO: add floating point scientific notation support
 func extractNumber(cursor int, src []rune, m *data.Meta) (int, *data.Token, error) {
 	t := data.TokenFromMeta(m)
+	isFloat := false
 
 	number := []rune{src[cursor]}
 	cursor++
@@ -168,8 +172,15 @@ func extractNumber(cursor int, src []rune, m *data.Meta) (int, *data.Token, erro
 
 	m.Inc()
 
-	for unicode.IsDigit(src[cursor]) {
+	for unicode.IsDigit(src[cursor]) || src[cursor] == '.' {
 		number = append(number, src[cursor])
+		if src[cursor] == '.' {
+			if isFloat {
+				return cursor, nil, ErrUnexpectedDotSymblol
+			}
+			isFloat = true
+		}
+
 		cursor++
 		if cursor >= len(src) {
 			return cursor, nil, ErrEndOfInput
@@ -184,9 +195,12 @@ func extractNumber(cursor int, src []rune, m *data.Meta) (int, *data.Token, erro
 	}
 
 	if sym := src[cursor]; !(unicode.IsSpace(sym) || sym == ')') {
-		return cursor, nil, ErrInvalidIntegerLiteral
+		return cursor, nil, ErrInvalidNumericLiteral
 	}
 
+	if isFloat {
+		return cursor, t.Set(data.Float, number...), nil
+	}
 	return cursor, t.Set(data.Int, number...), nil
 }
 

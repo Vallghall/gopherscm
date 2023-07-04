@@ -36,9 +36,11 @@ var (
 	// ErrEndOfInput - signals of unexpected end of input
 	ErrEndOfInput                  = errors.New("cursor is out of range")
 	ErrMissingMatchingDoubleQuotes = errors.New("missing matching double quotes")
-	ErrInvalidIntegerLiteral       = errors.New("invalid integer literal")
+	ErrInvalidNumericLiteral       = errors.New("invalid numeric literal")
 	ErrInvalidSymbol               = errors.New("invalid symbol")
 	ErrFreeClosingParantesis       = errors.New("free closing parenthesis")
 	ErrMissingClosingParenthesis   = errors.New("missing matching closing parenthesis")
 	ErrNaN                         = errors.New("NaN")
+	ErrUnexpectedLineBreak         = errors.New("unexpected line break")
+	ErrUnexpectedDotSymblol        = errors.New("unexpected dot symbol")
 )

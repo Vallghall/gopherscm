@@ -70,6 +70,25 @@ func TestLex(t *testing.T) {
 			lexer.ErrNaN, err)
 	})
 
+	t.Run("floats", func(t *testing.T) {
+		ts, err := lexer.Lex([]rune("(+ -1.342 20.576 -3.0)"))
+		require.NoErrorf(t, err, "expected no err, got: %v", err)
+		expected := data.TokenStream{
+			data.NewToken("(", data.Syntax),
+			data.NewToken("+", data.Id),
+			data.NewToken("-1.342", data.Float),
+			data.NewToken("20.576", data.Float),
+			data.NewToken("-3.0", data.Float),
+			data.NewToken(")", data.Syntax),
+		}
+		require.Equal(t, len(expected), len(ts))
+
+		for i, tkn := range ts {
+			require.Equal(t, tkn.Type(), expected[i].Type())
+			require.Equal(t, tkn.Value(), expected[i].Value())
+		}
+	})
+
 	t.Run("string tokenizing", func(t *testing.T) {
 		ts, err := lexer.Lex([]rune(`(display "Hello")`))
 		require.NoErrorf(t, err, "expected no err, got: %v", err)
@@ -86,6 +105,18 @@ func TestLex(t *testing.T) {
 			require.Equal(t, tkn.Type(), expected[i].Type())
 			require.Equal(t, tkn.Value(), expected[i].Value())
 		}
+	})
+
+	t.Run("string unexpected line break", func(t *testing.T) {
+		_, err := lexer.Lex([]rune(`(display "Hel
+		lo")`))
+		require.ErrorIsf(
+			t,
+			err,
+			lexer.ErrUnexpectedLineBreak,
+			"expected: %v,\ngot: %v",
+			lexer.ErrUnexpectedLineBreak, err)
+
 	})
 
 	t.Run("nested parentheses", func(t *testing.T) {
