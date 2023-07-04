@@ -2,8 +2,9 @@ package lexer
 
 import (
 	"errors"
-	"github.com/Vallghall/gopherscm/internal/data"
 	"unicode"
+
+	"github.com/Vallghall/gopherscm/internal/data"
 )
 
 // Lex transforms input slice of symbols into slice of valid Scheme tokens
@@ -77,7 +78,7 @@ func Tokenize(cursor int, src []rune, m *data.Meta) (int, *data.Token, error) {
 
 	// parsing integer literal
 	// TODO: add floating point numbers lexing
-	if unicode.IsDigit(sym) {
+	if unicode.IsDigit(sym) || sym == '-' {
 		return extractNumber(cursor, src, m)
 	}
 
@@ -153,11 +154,18 @@ func extractString(cursor int, src []rune, m *data.Meta) (int, *data.Token, erro
 // TODO: add floating point token support
 func extractNumber(cursor int, src []rune, m *data.Meta) (int, *data.Token, error) {
 	t := data.TokenFromMeta(m)
+
 	number := []rune{src[cursor]}
 	cursor++
 	if cursor >= len(src) {
 		return cursor, nil, ErrEndOfInput
 	}
+
+	// check situations like -foo or -"foo"
+	if number[0] == '-' && !unicode.IsDigit(src[cursor]) {
+		return cursor - 1, nil, ErrNaN
+	}
+
 	m.Inc()
 
 	for unicode.IsDigit(src[cursor]) {
@@ -207,5 +215,9 @@ func extractIdentifier(cursor int, src []rune, m *data.Meta) (int, *data.Token, 
 
 // isValidChar - predicate for checking a valid identifier's symbol
 func isValidChar(sym rune) bool {
-	return unicode.IsLetter(sym) || sym == '?' || sym == '!' || sym == '-' || sym == '_' || sym == '+'
+	return unicode.IsLetter(sym) ||
+		sym == '?' || sym == '!' ||
+		sym == '-' || sym == '_' ||
+		sym == '+' || sym == '*' ||
+		sym == '/'
 }

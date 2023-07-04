@@ -1,8 +1,10 @@
-package lexer
+package tests
 
 import (
-	"github.com/Vallghall/gopherscm/internal/data"
 	"testing"
+
+	"github.com/Vallghall/gopherscm/internal/data"
+	"github.com/Vallghall/gopherscm/internal/lexer"
 
 	"github.com/stretchr/testify/require"
 )
@@ -14,7 +16,7 @@ import (
 func TestLex(t *testing.T) {
 
 	t.Run("id with a few ints", func(t *testing.T) {
-		ts, err := Lex([]rune("(+ 1 2)"))
+		ts, err := lexer.Lex([]rune("(+ 1 2)"))
 		require.NoErrorf(t, err, "expected no err, got: %v", err)
 		expected := data.TokenStream{
 			data.NewToken("(", data.Syntax),
@@ -31,8 +33,45 @@ func TestLex(t *testing.T) {
 		}
 	})
 
+	t.Run("negative integers lexing", func(t *testing.T) {
+		ts, err := lexer.Lex([]rune("(+ -1 2 -3)"))
+		require.NoErrorf(t, err, "expected no err, got: %v", err)
+		expected := data.TokenStream{
+			data.NewToken("(", data.Syntax),
+			data.NewToken("+", data.Id),
+			data.NewToken("-1", data.Int),
+			data.NewToken("2", data.Int),
+			data.NewToken("-3", data.Int),
+			data.NewToken(")", data.Syntax),
+		}
+		require.Equal(t, len(expected), len(ts))
+
+		for i, tkn := range ts {
+			require.Equal(t, tkn.Type(), expected[i].Type())
+			require.Equal(t, tkn.Value(), expected[i].Value())
+		}
+	})
+
+	t.Run("negative NaN", func(t *testing.T) {
+		_, err := lexer.Lex([]rune(`(+ 1 -"2")`))
+		require.ErrorIsf(
+			t,
+			err,
+			lexer.ErrNaN,
+			"expected: %v,\ngot: %v",
+			lexer.ErrNaN, err)
+
+		_, err = lexer.Lex([]rune(`(+ 1 -foo)`))
+		require.ErrorIsf(
+			t,
+			err,
+			lexer.ErrNaN,
+			"expected: %v,\ngot: %v",
+			lexer.ErrNaN, err)
+	})
+
 	t.Run("string tokenizing", func(t *testing.T) {
-		ts, err := Lex([]rune(`(display "Hello")`))
+		ts, err := lexer.Lex([]rune(`(display "Hello")`))
 		require.NoErrorf(t, err, "expected no err, got: %v", err)
 		expected := data.TokenStream{
 			data.NewToken("(", data.Syntax),
@@ -50,7 +89,7 @@ func TestLex(t *testing.T) {
 	})
 
 	t.Run("nested parentheses", func(t *testing.T) {
-		ts, err := Lex([]rune("(cons 1 (cons 2 (cons 3 nil)))"))
+		ts, err := lexer.Lex([]rune("(cons 1 (cons 2 (cons 3 nil)))"))
 		require.NoErrorf(t, err, "expected no err, got: %v", err)
 
 		expected := data.TokenStream{
@@ -78,33 +117,33 @@ func TestLex(t *testing.T) {
 	})
 
 	t.Run("parenthesis mismatch", func(t *testing.T) {
-		_, err := Lex([]rune(`(+ 1 2 3`))
+		_, err := lexer.Lex([]rune(`(+ 1 2 3`))
 		require.ErrorIsf(
 			t,
 			err,
-			ErrMissingClosingParenthesis,
+			lexer.ErrMissingClosingParenthesis,
 			"expected: %v,\ngot: %v",
-			ErrMissingClosingParenthesis, err)
+			lexer.ErrMissingClosingParenthesis, err)
 
-		_, err = Lex([]rune("(+ 1 2 3))"))
+		_, err = lexer.Lex([]rune("(+ 1 2 3))"))
 		require.ErrorIsf(
 			t,
 			err,
-			ErrFreeClosingParantesis,
+			lexer.ErrFreeClosingParantesis,
 			"expected: %v\ngot: %v",
-			ErrFreeClosingParantesis, err)
+			lexer.ErrFreeClosingParantesis, err)
 
-		_, err = Lex([]rune("((+ 1 2 3)"))
+		_, err = lexer.Lex([]rune("((+ 1 2 3)"))
 		require.ErrorIsf(
 			t,
 			err,
-			ErrMissingClosingParenthesis,
+			lexer.ErrMissingClosingParenthesis,
 			"expected: %v\ngot: %v",
-			ErrMissingClosingParenthesis, err)
+			lexer.ErrMissingClosingParenthesis, err)
 	})
 
 	t.Run("single line comments", func(t *testing.T) {
-		ts, err := Lex([]rune(`
+		ts, err := lexer.Lex([]rune(`
 		;; this is a comment
 		(+ 1 ; 	comment
            2; 	comment again

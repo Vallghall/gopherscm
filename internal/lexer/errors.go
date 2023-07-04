@@ -40,4 +40,5 @@ var (
 	ErrInvalidSymbol               = errors.New("invalid symbol")
 	ErrFreeClosingParantesis       = errors.New("free closing parenthesis")
 	ErrMissingClosingParenthesis   = errors.New("missing matching closing parenthesis")
+	ErrNaN                         = errors.New("NaN")
 )
