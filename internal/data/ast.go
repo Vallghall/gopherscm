@@ -1,5 +1,10 @@
 package data
 
+import (
+	"encoding/json"
+	"errors"
+)
+
 // AST - represents Scheme program structure
 type AST struct {
 	OuterCtx *Context
@@ -35,6 +40,8 @@ func (ast *AST) Add(t *Token) *AST {
 // Expr - expressions supported by the program
 type Expr uint
 
+var ErrUnsupportedExprKind = errors.New("unsupported exression kind")
+
 // Expr enum
 const (
 	// Literal - expression which is evaluated into itself
@@ -48,3 +55,18 @@ const (
 	// Root - AST root unique expressions kind
 	Root = 9999
 )
+
+func (e Expr) MarshalJSON() ([]byte, error) {
+	switch e {
+	case Literal:
+		return json.Marshal("Literal")
+	case CallExpr:
+		return json.Marshal("CallExpr")
+	case DefineExpr:
+		return json.Marshal("DefineExpr")
+	case Root:
+		return json.Marshal("Root")
+	default:
+		return nil, ErrUnsupportedExprKind
+	}
+}

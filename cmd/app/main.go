@@ -27,12 +27,24 @@ func main() {
 		log.Fatalln(err)
 	}
 
+	fmt.Println("***START***")
 	ts, err := lexer.Lex(bytes.Runes(bs))
 	if err != nil {
 		log.Fatalln(err)
 	}
+	lexOut, _ := os.Create("lex.out.json")
+	defer lexOut.Close()
+
+	encoder := json.NewEncoder(lexOut)
+	encoder.SetIndent("", "    ")
+	encoder.Encode(ts)
 
 	ast := parser.Parse(ts)
-	j, _ := json.MarshalIndent(ast, "", "    ")
-	fmt.Println(string(j))
+
+	parseOut, _ := os.Create("parse.out.json")
+	defer parseOut.Close()
+
+	encoder = json.NewEncoder(parseOut)
+	encoder.SetIndent("", "    ")
+	encoder.Encode(ast)
 }

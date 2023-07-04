@@ -21,10 +21,9 @@ func parse(ast *data.AST, ts data.TokenStream, idx int) int {
 	for idx < len(ts) {
 		token := ts[idx]
 		if token.Type() == data.Syntax {
-			idx++
-			subtree := ast.Add(ts[idx])
-
 			if token.Value() == lParen {
+				idx++
+				subtree := ast.Add(ts[idx])
 				idx = parse(subtree, ts, idx+1)
 				continue
 			}
