@@ -1,6 +1,6 @@
 package data
 
-// TODO: Add tests for meta methods
+// TODO: ApplyOperation tests for meta methods
 
 // Meta - stores Meta for analytics and error positioning
 type Meta struct {

@@ -3,6 +3,7 @@ package types
 import (
 	"errors"
 	"fmt"
+	"github.com/Vallghall/gopherscm/internal/core/operator"
 )
 
 // number - supported number types
@@ -20,6 +21,10 @@ type Number struct {
 	value any
 }
 
+func (n *Number) String() string {
+	return fmt.Sprintf("%v", n.value)
+}
+
 // Value - return the value of number.
 // Implements data.Object interface
 func (n *Number) Value() any {
@@ -27,17 +32,25 @@ func (n *Number) Value() any {
 }
 
 // NewNumber - Number type constructor
-func NewNumber() *Number {
+func NewNumber(d int64) *Number {
 	return &Number{
 		t:     Int,
-		value: int64(0),
+		value: d,
 	}
 }
 
 // NumberFrom - Number type constructor from a number
-func NumberFrom(obj any, kind number) *Number {
+func NumberFrom(obj any) *Number {
+	var t number
+	switch obj.(type) {
+	case int64:
+		t = Int
+	case float64:
+		t = Float
+	}
+
 	return &Number{
-		t:     kind,
+		t:     t,
 		value: obj,
 	}
 }
@@ -50,45 +63,58 @@ func (n *Number) Float() float64 {
 	return n.value.(float64)
 }
 
-// Add - addition that considers the underlying type of Number
-func (n *Number) Add(obj Object) error {
-	num, ok := obj.(*Number)
+// ApplyOperation - applies operation considering underlying types
+func (n *Number) ApplyOperation(op operator.Operator, o Object) (obj *Number, err error) {
+	num, ok := o.(*Number)
 	if !ok {
-		return errors.New("Not a Number")
+		return nil, errors.New("Not a Number")
 	}
 
 	switch num.value.(type) {
 	case int64:
-		n.AddInt(num)
+		obj = n.ApplyInt(op, num)
 	case float64:
-		n.AddFloat(num)
+		obj = n.ApplyFloat(op, num)
 	default:
-		return fmt.Errorf("unsupported")
+		return nil, fmt.Errorf("unsupported")
 	}
 
-	return nil
+	return
 }
 
-// AddInt - handles int64 addition to Number
-func (n *Number) AddInt(num *Number) {
+// ApplyUnary - applies unary operator considering underlying types
+// Right now it is implemented for negation only
+func (n *Number) ApplyUnary() (obj Object, err error) {
+	switch n.t {
+	case Int:
+		obj = NumberFrom(operator.Neg(n.Int()))
+	case Float:
+		obj = NumberFrom(operator.Neg(n.Float()))
+	default:
+		return nil, fmt.Errorf("unsupported")
+	}
+
+	return
+}
+
+// ApplyInt - handles int64 application to Number
+func (n *Number) ApplyInt(op operator.Operator, num *Number) (obj *Number) {
 	if n.t == Int {
-		n.value = n.Int() + num.Int()
+		obj = NumberFrom(operator.Run(op, n.Int(), num.Int()))
 	} else {
-		n.value = n.Float() + float64(num.Int())
+		obj = NumberFrom(operator.Run(op, n.Float(), float64(num.Int())))
 	}
+
+	return
 }
 
-// AddFloat - handles float64 addition to Number
-func (n *Number) AddFloat(num *Number) {
+// ApplyFloat - handles float64 application to Number
+func (n *Number) ApplyFloat(op operator.Operator, num *Number) (obj *Number) {
 	if n.t == Float {
-		n.value = n.Float() + num.Float()
+		obj = NumberFrom(operator.Run(op, n.Float(), num.Float()))
 	} else {
-		// if t = Int, upgrade it to Float
-		n.t = Float
-		n.value = float64(n.Int()) + num.Float()
+		obj = NumberFrom(operator.Run(op, float64(n.Int()), num.Float()))
 	}
-}
 
-func (n *Number) String() string {
-	return fmt.Sprintf("%v", n.value)
+	return
 }

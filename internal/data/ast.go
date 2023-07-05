@@ -102,14 +102,14 @@ func (ast *AST) eval() (types.Object, error) {
 				return nil, err
 			}
 
-			return types.NumberFrom(num, types.Int), nil
+			return types.NumberFrom(num), nil
 		case Float:
 			num, err := strconv.ParseFloat(ast.Token.Value(), 64)
 			if err != nil {
 				return nil, err
 			}
 
-			return types.NumberFrom(num, types.Float), nil
+			return types.NumberFrom(num), nil
 		default:
 		}
 	}
