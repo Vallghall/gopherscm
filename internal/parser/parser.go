@@ -23,7 +23,7 @@ func parse(ast *data.AST, ts data.TokenStream, idx int) int {
 		if token.Type() == data.Syntax {
 			if token.Value() == lParen {
 				idx++
-				subtree := ast.Add(ts[idx])
+				subtree := ast.Nest(ts[idx])
 				idx = parse(subtree, ts, idx+1)
 				continue
 			}

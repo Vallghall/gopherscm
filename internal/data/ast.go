@@ -1,13 +1,7 @@
 package data
 
-import (
-	"encoding/json"
-	"errors"
-)
-
 // AST - represents Scheme program structure
 type AST struct {
-	OuterCtx *Context
 	Ctx      *Context
 	Token    *Token
 	Kind     Expr
@@ -22,13 +16,12 @@ func ASTRoot() *AST {
 	}
 }
 
-// Add - AST node constructor
-func (ast *AST) Add(t *Token) *AST {
+// Nest - AST node constructor
+func (ast *AST) Nest(t *Token) *AST {
 	node := &AST{
-		OuterCtx: ast.Ctx,
-		Ctx:      ast.Ctx,
+		Ctx:      ast.Ctx.Spawn(),
 		Token:    t,
-		//kind:  TODO: add kind parsing,
+		Kind:     CallExpr, // all nested forms have functions as the first elem
 		Subtrees: make([]*AST, 0),
 	}
 
@@ -37,36 +30,37 @@ func (ast *AST) Add(t *Token) *AST {
 	return node
 }
 
-// Expr - expressions supported by the program
-type Expr uint
-
-var ErrUnsupportedExprKind = errors.New("unsupported exression kind")
-
-// Expr enum
-const (
-	// Literal - expression which is evaluated into itself
-	Literal Expr = iota
-	// CallExpr - function with a list of arguments
-	CallExpr
-	// DefineExpr - expression that creates a new lexical scope
-	// and binds variable with an expression
-	DefineExpr
-
-	// Root - AST root unique expressions kind
-	Root = 9999
-)
-
-func (e Expr) MarshalJSON() ([]byte, error) {
-	switch e {
-	case Literal:
-		return json.Marshal("Literal")
-	case CallExpr:
-		return json.Marshal("CallExpr")
-	case DefineExpr:
-		return json.Marshal("DefineExpr")
-	case Root:
-		return json.Marshal("Root")
-	default:
-		return nil, ErrUnsupportedExprKind
+// Add - AST node constructor
+func (ast *AST) Add(t *Token) *AST {
+	var e Expr
+	switch t.Type() {
+	case Int, Float, String:
+		e = Literal
+	case Id:
+		e = VariableRef
+	default: // fill in later
 	}
+
+	node := &AST{
+		Ctx:      ast.Ctx,
+		Token:    t,
+		Kind:     e,
+		Subtrees: make([]*AST, 0),
+	}
+
+	ast.Subtrees = append(ast.Subtrees, node)
+
+	return node
+}
+
+// Eval - evaluate AST to a sigle value
+func (ast *AST) Eval() any {
+	for _, _ = range ast.Subtrees {
+		//TODO
+	}
+	return nil
+}
+
+func (ast *AST) eval() any {
+	return nil
 }

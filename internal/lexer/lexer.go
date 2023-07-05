@@ -166,7 +166,7 @@ func extractNumber(cursor int, src []rune, m *data.Meta) (int, *data.Token, erro
 	}
 
 	// check situations like -foo or -"foo"
-	if number[0] == '-' && !unicode.IsDigit(src[cursor]) {
+	if number[0] == '-' && !unicode.IsDigit(src[cursor]) && src[cursor-2] != '(' {
 		return cursor - 1, nil, ErrNaN
 	}
 

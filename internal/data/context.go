@@ -8,6 +8,23 @@ type Context struct {
 	symbolTable map[string]any
 }
 
+// NewContext - Context constructor for the global
+// context that has no outer context
+func NewContext(t map[string]any) *Context {
+	return &Context{
+		symbolTable: t,
+	}
+}
+
+// Spawn - creates child context, that points to
+// the parent context, with empty symbol table
+func (c *Context) Spawn() *Context {
+	return &Context{
+		outerCtx:    c,
+		symbolTable: make(map[string]any),
+	}
+}
+
 // FindDef - find definition for the given identifier
 func (c *Context) FindDef(s string) (any, bool) {
 	def, ok := c.symbolTable[s]
