@@ -47,4 +47,11 @@ func main() {
 	encoder = json.NewEncoder(parseOut)
 	encoder.SetIndent("", "    ")
 	encoder.Encode(ast)
+
+	result, err := ast.Eval()
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	fmt.Println(result)
 }

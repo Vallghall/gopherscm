@@ -1,5 +1,13 @@
 package data
 
+import (
+	"errors"
+	"fmt"
+	"github.com/Vallghall/gopherscm/internal/core"
+	"github.com/Vallghall/gopherscm/internal/core/types"
+	"strconv"
+)
+
 // AST - represents Scheme program structure
 type AST struct {
 	Ctx      *Context
@@ -12,6 +20,7 @@ type AST struct {
 func ASTRoot() *AST {
 	return &AST{
 		Kind:     Root,
+		Ctx:      NewContext(core.DefaultDefinitions()),
 		Subtrees: make([]*AST, 0),
 	}
 }
@@ -28,6 +37,11 @@ func (ast *AST) Nest(t *Token) *AST {
 	ast.Subtrees = append(ast.Subtrees, node)
 
 	return node
+}
+
+// Identifier - returns value of stored Token
+func (ast *AST) Identifier() string {
+	return ast.Token.Value()
 }
 
 // Add - AST node constructor
@@ -53,14 +67,85 @@ func (ast *AST) Add(t *Token) *AST {
 	return node
 }
 
-// Eval - evaluate AST to a sigle value
-func (ast *AST) Eval() any {
-	for _, _ = range ast.Subtrees {
-		//TODO
+// Eval - evaluate AST to a single value
+func (ast *AST) Eval() (res types.Object, err error) {
+	if ast.Kind != Root {
+		return nil, errors.New("available for root node only")
 	}
-	return nil
+
+	for _, st := range ast.Subtrees {
+		res, err = st.eval()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return
 }
 
-func (ast *AST) eval() any {
-	return nil
+func (ast *AST) eval() (types.Object, error) {
+	if ast.Kind == CallExpr {
+		return ast.call()
+	}
+
+	if ast.Kind == VariableRef {
+		return ast.getVar()
+	}
+
+	if ast.Kind == Literal {
+		switch ast.Token.Type() {
+		case String:
+			return types.String(ast.Token.Value()), nil
+		case Int:
+			num, err := strconv.ParseInt(ast.Token.Value(), 10, 64)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NumberFrom(num, types.Int), nil
+		case Float:
+			num, err := strconv.ParseFloat(ast.Token.Value(), 64)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NumberFrom(num, types.Float), nil
+		default:
+		}
+	}
+
+	return nil, fmt.Errorf("unimplemented")
+}
+
+func (ast *AST) getVar() (types.Object, error) {
+	def, ok := ast.Ctx.FindDef(ast.Identifier())
+	if !ok {
+		return nil, fmt.Errorf(`"%v" is not defined`, ast.Identifier())
+	}
+
+	return def, nil
+}
+
+func (ast *AST) call() (types.Object, error) {
+	def, ok := ast.Ctx.FindDef(ast.Identifier())
+	if !ok {
+		return nil, fmt.Errorf(`"%v" is not defined`, ast.Identifier())
+	}
+
+	fun, ok := def.(types.Callable)
+	if !ok {
+		return nil, fmt.Errorf(`"%v" is not a function`, ast.Identifier())
+	}
+
+	var args []types.Object
+	for _, st := range ast.Subtrees {
+		arg, err := st.eval()
+		if err != nil {
+			return nil, err
+		}
+
+		args = append(args, arg)
+	}
+
+	return fun.Call(args...)
 }
