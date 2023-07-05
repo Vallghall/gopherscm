@@ -1,4 +1,3 @@
-(display (+ 1 2 3))
-(newline)
-(displayln (* 4 5 6))
+(define (foo a b) (+ a b))
+(display (foo 1 2))
 

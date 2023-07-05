@@ -41,3 +41,8 @@ func (c *Context) FindDef(s string) (types.Object, bool) {
 
 	return def, true
 }
+
+// Set - binds provided object to a given key within the current context
+func (c *Context) Set(key string, obj types.Object) {
+	c.symbolTable[key] = obj
+}

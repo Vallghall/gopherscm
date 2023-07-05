@@ -22,7 +22,8 @@ const (
 	// DefineExpr - expression that creates a new lexical scope
 	// and binds variable with an expression
 	DefineExpr
-
+	// Function - node containing function body
+	Function
 	// Root - AST root unique expressions kind
 	Root = 9999
 )
