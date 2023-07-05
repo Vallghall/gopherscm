@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"os"
 
@@ -27,7 +26,6 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	fmt.Println("***START***")
 	ts, err := lexer.Lex(bytes.Runes(bs))
 	if err != nil {
 		log.Fatalln(err)
@@ -48,10 +46,8 @@ func main() {
 	encoder.SetIndent("", "    ")
 	encoder.Encode(ast)
 
-	result, err := ast.Eval()
+	_, err = ast.Eval()
 	if err != nil {
 		log.Fatalln(err)
 	}
-
-	fmt.Println(result)
 }
