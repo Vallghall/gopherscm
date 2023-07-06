@@ -37,6 +37,10 @@ func (e Expr) MarshalJSON() ([]byte, error) {
 		return json.Marshal("CallExpr")
 	case DefineExpr:
 		return json.Marshal("DefineExpr")
+	case VariableRef:
+		return json.Marshal("VariableRef")
+	case Function:
+		return json.Marshal("Function")
 	case Root:
 		return json.Marshal("Root")
 	default:

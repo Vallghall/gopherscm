@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/Vallghall/gopherscm/internal/errscm"
+
 	"github.com/Vallghall/gopherscm/internal/core"
 	"github.com/Vallghall/gopherscm/internal/core/types"
 )
@@ -17,29 +19,31 @@ type AST struct {
 	Subtrees []*AST
 }
 
-// FuncBody - ast, evaluated as function body
-type FuncBody struct {
+// Func - ast, evaluated as function body
+type Func struct {
 	*AST
 	Params []string
 }
 
-// Func - create function body from AST node
-// with its own scope
-func (ast *AST) Func(body *AST) *FuncBody {
-	body.Ctx = ast.Ctx.Spawn() // create a child context
-	return &FuncBody{
-		AST: body,
+// Func - create function from AST subtrees
+func (ast *AST) Func(body []*AST) *Func {
+	return &Func{
+		AST: &AST{
+			Ctx:      ast.Ctx.Spawn(),
+			Kind:     Function,
+			Subtrees: body,
+		},
 	}
 }
 
 // Value - types.Object interface implementation
-func (f *FuncBody) Value() any {
+func (f *Func) Value() any {
 	return "lambda" // TODO: improve it
 }
 
 // Call - types.Callable interface implementation
-// Binds given arguments to parameter list and evaluates the FuncBody
-func (f *FuncBody) Call(args ...types.Object) (types.Object, error) {
+// Binds given arguments to parameter list and evaluates the Func
+func (f *Func) Call(args ...types.Object) (result types.Object, err error) {
 	if len(args) != len(f.Params) {
 		return nil, fmt.Errorf(
 			"not enough arguments:\nexpected %d\ngot: %d",
@@ -53,7 +57,15 @@ func (f *FuncBody) Call(args ...types.Object) (types.Object, error) {
 		f.Ctx.Set(key, args[i])
 	}
 
-	return f.call()
+	for _, expr := range f.Subtrees {
+		expr.Ctx = f.Ctx // enforce function ctx onto its body expressions
+		result, err = expr.eval()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return result, nil
 }
 
 // ASTRoot - constructor for AST
@@ -210,14 +222,14 @@ func (ast *AST) call() (types.Object, error) {
 
 // define - handles variable and function definitions
 func (ast *AST) define() (types.Object, error) {
-	if len(ast.Subtrees) != 2 {
-		return nil, fmt.Errorf("expected 2 args, got: %d", len(ast.Subtrees))
-	}
-
 	id := ast.Subtrees[0]
-	def := ast.Subtrees[1]
 
 	if id.Kind == VariableRef {
+		if len(ast.Subtrees) != 2 {
+			return nil, fmt.Errorf("%w: expected 2 args, got: %d", errscm.ErrUnexpectedNumberOfArguments, len(ast.Subtrees))
+		}
+
+		def := ast.Subtrees[1]
 		value, err := def.eval()
 		if err != nil {
 			return nil, err
@@ -228,7 +240,11 @@ func (ast *AST) define() (types.Object, error) {
 	}
 
 	if id.Kind == CallExpr {
-		fn := id.Func(def)
+		if len(ast.Subtrees) < 2 {
+			return nil, fmt.Errorf("%w: missing function body", errscm.ErrTooLittleArguments)
+		}
+
+		fn := id.Func(ast.Subtrees[1:])
 		for _, param := range id.Subtrees {
 			if param.Kind == VariableRef {
 				fn.Params = append(fn.Params, param.Identifier())

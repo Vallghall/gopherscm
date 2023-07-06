@@ -28,6 +28,8 @@ func (t Type) MarshalJSON() ([]byte, error) {
 		return json.Marshal("Identifier")
 	case Int:
 		return json.Marshal("Integer")
+	case Float:
+		return json.Marshal("Float")
 	case String:
 		return json.Marshal("String")
 	default:
