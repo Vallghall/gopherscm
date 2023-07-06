@@ -2,6 +2,7 @@ package lexer
 
 import (
 	"errors"
+	"github.com/Vallghall/gopherscm/internal/errscm"
 	"unicode"
 
 	"github.com/Vallghall/gopherscm/internal/data"
@@ -29,7 +30,7 @@ func Lex(src []rune) (data.TokenStream, error) {
 
 		cursor, token, err = Tokenize(cursor, src, m)
 		if err != nil {
-			if errors.Is(err, ErrEndOfInput) {
+			if errors.Is(err, errscm.ErrEndOfInput) {
 				break
 			}
 			return nil, err
@@ -45,12 +46,12 @@ func Lex(src []rune) (data.TokenStream, error) {
 		}
 
 		if parenCount < 0 {
-			return nil, ErrFreeClosingParantesis
+			return nil, errscm.ErrFreeClosingParenthesis
 		}
 	}
 
 	if parenCount > 0 {
-		return nil, ErrMissingClosingParenthesis
+		return nil, errscm.ErrMissingClosingParenthesis
 	}
 
 	return ts, nil
@@ -59,7 +60,7 @@ func Lex(src []rune) (data.TokenStream, error) {
 // Tokenize - Extracts token from rune sequence
 func Tokenize(cursor int, src []rune, m *data.Meta) (int, *data.Token, error) {
 	if cursor >= len(src) {
-		return cursor, nil, ErrEndOfInput
+		return cursor, nil, errscm.ErrEndOfInput
 	}
 
 	sym := src[cursor]
@@ -87,7 +88,7 @@ func Tokenize(cursor int, src []rune, m *data.Meta) (int, *data.Token, error) {
 		return extractIdentifier(cursor, src, m)
 	}
 
-	return cursor, nil, ErrInvalidSymbol
+	return cursor, nil, errscm.ErrInvalidSymbol
 }
 
 // skipSingleLineComment
@@ -129,20 +130,20 @@ func extractString(cursor int, src []rune, m *data.Meta) (int, *data.Token, erro
 	t := data.TokenFromMeta(m)
 	cursor++ // move forward from quote
 	if cursor >= len(src) {
-		return cursor, nil, ErrEndOfInput
+		return cursor, nil, errscm.ErrEndOfInput
 	}
 	m.Inc()
 
 	str := make([]rune, 0)
 	for sym := src[cursor]; sym != '"'; sym = src[cursor] {
 		if sym == '\n' {
-			return cursor, nil, ErrUnexpectedLineBreak
+			return cursor, nil, errscm.ErrUnexpectedLineBreak
 		}
 
 		str = append(str, sym)
 		cursor++
 		if cursor >= len(src) {
-			return cursor, nil, ErrMissingMatchingDoubleQuotes
+			return cursor, nil, errscm.ErrMissingMatchingDoubleQuotes
 		}
 
 		m.Inc()
@@ -162,12 +163,12 @@ func extractNumber(cursor int, src []rune, m *data.Meta) (int, *data.Token, erro
 	number := []rune{src[cursor]}
 	cursor++
 	if cursor >= len(src) {
-		return cursor, nil, ErrEndOfInput
+		return cursor, nil, errscm.ErrEndOfInput
 	}
 
 	// check situations like -foo or -"foo"
 	if number[0] == '-' && !unicode.IsDigit(src[cursor]) && src[cursor-2] != '(' {
-		return cursor - 1, nil, ErrNaN
+		return cursor - 1, nil, errscm.ErrNaN
 	}
 
 	m.Inc()
@@ -176,14 +177,14 @@ func extractNumber(cursor int, src []rune, m *data.Meta) (int, *data.Token, erro
 		number = append(number, src[cursor])
 		if src[cursor] == '.' {
 			if isFloat {
-				return cursor, nil, ErrUnexpectedDotSymblol
+				return cursor, nil, errscm.ErrUnexpectedDotSymbol
 			}
 			isFloat = true
 		}
 
 		cursor++
 		if cursor >= len(src) {
-			return cursor, nil, ErrEndOfInput
+			return cursor, nil, errscm.ErrEndOfInput
 		}
 
 		m.Inc()
@@ -191,11 +192,11 @@ func extractNumber(cursor int, src []rune, m *data.Meta) (int, *data.Token, erro
 
 	cursor = skipSingleLineComment(cursor, src, m)
 	if cursor >= len(src) {
-		return cursor, nil, ErrEndOfInput
+		return cursor, nil, errscm.ErrEndOfInput
 	}
 
 	if sym := src[cursor]; !(unicode.IsSpace(sym) || sym == ')') {
-		return cursor, nil, ErrInvalidNumericLiteral
+		return cursor, nil, errscm.ErrInvalidNumericLiteral
 	}
 
 	if isFloat {
@@ -210,7 +211,7 @@ func extractIdentifier(cursor int, src []rune, m *data.Meta) (int, *data.Token, 
 	id := []rune{src[cursor]}
 	cursor++
 	if cursor >= len(src) {
-		return cursor, nil, ErrEndOfInput
+		return cursor, nil, errscm.ErrEndOfInput
 	}
 	m.IncNL(src[cursor])
 
@@ -219,7 +220,7 @@ func extractIdentifier(cursor int, src []rune, m *data.Meta) (int, *data.Token, 
 
 		cursor++
 		if cursor >= len(src) {
-			return cursor, nil, ErrEndOfInput
+			return cursor, nil, errscm.ErrEndOfInput
 		}
 		m.IncNL(src[cursor])
 	}

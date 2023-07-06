@@ -17,6 +17,7 @@ func Parse(ts data.TokenStream) *data.AST {
 	return ast
 }
 
+// parse - recursive helper called from Parse
 func parse(ast *data.AST, ts data.TokenStream, idx int) int {
 	for idx < len(ts) {
 		token := ts[idx]

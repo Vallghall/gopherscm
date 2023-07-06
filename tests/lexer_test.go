@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"github.com/Vallghall/gopherscm/internal/errscm"
 	"testing"
 
 	"github.com/Vallghall/gopherscm/internal/data"
@@ -57,17 +58,17 @@ func TestLex(t *testing.T) {
 		require.ErrorIsf(
 			t,
 			err,
-			lexer.ErrNaN,
+			errscm.ErrNaN,
 			"expected: %v,\ngot: %v",
-			lexer.ErrNaN, err)
+			errscm.ErrNaN, err)
 
 		_, err = lexer.Lex([]rune(`(+ 1 -foo)`))
 		require.ErrorIsf(
 			t,
 			err,
-			lexer.ErrNaN,
+			errscm.ErrNaN,
 			"expected: %v,\ngot: %v",
-			lexer.ErrNaN, err)
+			errscm.ErrNaN, err)
 	})
 
 	t.Run("floats", func(t *testing.T) {
@@ -113,9 +114,9 @@ func TestLex(t *testing.T) {
 		require.ErrorIsf(
 			t,
 			err,
-			lexer.ErrUnexpectedLineBreak,
+			errscm.ErrUnexpectedLineBreak,
 			"expected: %v,\ngot: %v",
-			lexer.ErrUnexpectedLineBreak, err)
+			errscm.ErrUnexpectedLineBreak, err)
 
 	})
 
@@ -152,25 +153,25 @@ func TestLex(t *testing.T) {
 		require.ErrorIsf(
 			t,
 			err,
-			lexer.ErrMissingClosingParenthesis,
+			errscm.ErrMissingClosingParenthesis,
 			"expected: %v,\ngot: %v",
-			lexer.ErrMissingClosingParenthesis, err)
+			errscm.ErrMissingClosingParenthesis, err)
 
 		_, err = lexer.Lex([]rune("(+ 1 2 3))"))
 		require.ErrorIsf(
 			t,
 			err,
-			lexer.ErrFreeClosingParantesis,
+			errscm.ErrFreeClosingParenthesis,
 			"expected: %v\ngot: %v",
-			lexer.ErrFreeClosingParantesis, err)
+			errscm.ErrFreeClosingParenthesis, err)
 
 		_, err = lexer.Lex([]rune("((+ 1 2 3)"))
 		require.ErrorIsf(
 			t,
 			err,
-			lexer.ErrMissingClosingParenthesis,
+			errscm.ErrMissingClosingParenthesis,
 			"expected: %v\ngot: %v",
-			lexer.ErrMissingClosingParenthesis, err)
+			errscm.ErrMissingClosingParenthesis, err)
 	})
 
 	t.Run("single line comments", func(t *testing.T) {

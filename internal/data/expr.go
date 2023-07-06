@@ -8,7 +8,8 @@ import (
 // Expr - expressions supported by the program
 type Expr uint
 
-var ErrUnsupportedExprKind = errors.New("unsupported exression kind")
+// ErrUnsupportedExprKind - error unsupported expression kind
+var ErrUnsupportedExprKind = errors.New("unsupported expression kind")
 
 // Expr enum
 const (

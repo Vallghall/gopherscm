@@ -1,9 +1,9 @@
 package types
 
 import (
-	"errors"
 	"fmt"
 	"github.com/Vallghall/gopherscm/internal/core/operator"
+	"github.com/Vallghall/gopherscm/internal/errscm"
 )
 
 // number - supported number types
@@ -67,7 +67,7 @@ func (n *Number) Float() float64 {
 func (n *Number) ApplyOperation(op operator.Operator, o Object) (obj *Number, err error) {
 	num, ok := o.(*Number)
 	if !ok {
-		return nil, errors.New("Not a Number")
+		return nil, errscm.ErrNaN
 	}
 
 	switch num.value.(type) {
@@ -76,7 +76,7 @@ func (n *Number) ApplyOperation(op operator.Operator, o Object) (obj *Number, er
 	case float64:
 		obj = n.ApplyFloat(op, num)
 	default:
-		return nil, fmt.Errorf("unsupported")
+		return nil, errscm.ErrUnsupported
 	}
 
 	return
@@ -91,7 +91,7 @@ func (n *Number) ApplyUnary() (obj Object, err error) {
 	case Float:
 		obj = NumberFrom(operator.Neg(n.Float()))
 	default:
-		return nil, fmt.Errorf("unsupported")
+		return nil, errscm.ErrUnsupported
 	}
 
 	return

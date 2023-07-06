@@ -23,6 +23,8 @@ type FuncBody struct {
 	Params []string
 }
 
+// Func - create function body from AST node
+// with its own scope
 func (ast *AST) Func(body *AST) *FuncBody {
 	body.Ctx = ast.Ctx.Spawn() // create a child context
 	return &FuncBody{
@@ -30,10 +32,13 @@ func (ast *AST) Func(body *AST) *FuncBody {
 	}
 }
 
+// Value - types.Object interface implementation
 func (f *FuncBody) Value() any {
 	return "lambda" // TODO: improve it
 }
 
+// Call - types.Callable interface implementation
+// Binds given arguments to parameter list and evaluates the FuncBody
 func (f *FuncBody) Call(args ...types.Object) (types.Object, error) {
 	if len(args) != len(f.Params) {
 		return nil, fmt.Errorf(
@@ -123,6 +128,7 @@ func (ast *AST) Eval() (res types.Object, err error) {
 	return
 }
 
+// eval - evaluates expression based on its kind
 func (ast *AST) eval() (types.Object, error) {
 	switch ast.Kind {
 	case CallExpr:
@@ -138,6 +144,8 @@ func (ast *AST) eval() (types.Object, error) {
 	return nil, fmt.Errorf("unimplemented")
 }
 
+// evalLiteral - wrapping literal's token value into
+// a type that implements types.Object
 func (ast *AST) evalLiteral() (types.Object, error) {
 	switch ast.Token.Type() {
 	case String:
@@ -162,6 +170,7 @@ func (ast *AST) evalLiteral() (types.Object, error) {
 	return nil, errors.New("unimplemented")
 }
 
+// getVar - variable lookup
 func (ast *AST) getVar() (types.Object, error) {
 	def, ok := ast.Ctx.FindDef(ast.Identifier())
 	if !ok {
@@ -171,6 +180,9 @@ func (ast *AST) getVar() (types.Object, error) {
 	return def, nil
 }
 
+// call - asserts that the object called is types.Callable,
+// evaluates its list of arguments and calls the function with
+// the evaluated arguments
 func (ast *AST) call() (types.Object, error) {
 	def, ok := ast.Ctx.FindDef(ast.Identifier())
 	if !ok {
@@ -184,7 +196,7 @@ func (ast *AST) call() (types.Object, error) {
 
 	var args []types.Object
 	for _, st := range ast.Subtrees {
-		st.Ctx = ast.Ctx // TODO: check if ok
+		st.Ctx = ast.Ctx // function context enforcement
 		arg, err := st.eval()
 		if err != nil {
 			return nil, err
@@ -196,6 +208,7 @@ func (ast *AST) call() (types.Object, error) {
 	return fun.Call(args...)
 }
 
+// define - handles variable and function definitions
 func (ast *AST) define() (types.Object, error) {
 	if len(ast.Subtrees) != 2 {
 		return nil, fmt.Errorf("expected 2 args, got: %d", len(ast.Subtrees))

@@ -9,3 +9,9 @@ type Callable interface {
 type Object interface {
 	Value() any
 }
+
+// CallableObject - more generic function interface
+type CallableObject interface {
+	Callable
+	Object
+}

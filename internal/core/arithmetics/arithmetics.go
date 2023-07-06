@@ -1,10 +1,10 @@
 package arithmetics
 
 import (
-	"errors"
 	"fmt"
 	"github.com/Vallghall/gopherscm/internal/core/operator"
 	"github.com/Vallghall/gopherscm/internal/core/types"
+	"github.com/Vallghall/gopherscm/internal/errscm"
 )
 
 // Primitive - wrapper for primitive arithmetics
@@ -35,13 +35,13 @@ func Plus(args ...types.Object) (types.Object, error) {
 // Minus – `-` primitive
 func Minus(args ...types.Object) (types.Object, error) {
 	if len(args) < 1 {
-		return nil, errors.New("too few arguments")
+		return nil, errscm.ErrTooLittleArguments
 	}
 
 	var err error
 	sub, ok := args[0].(*types.Number)
 	if !ok {
-		return nil, errors.New("not a number")
+		return nil, errscm.ErrNaN
 	}
 
 	if len(args) == 1 {
@@ -75,12 +75,12 @@ func Multiply(args ...types.Object) (types.Object, error) {
 // Divide – `/` primitive
 func Divide(args ...types.Object) (types.Object, error) {
 	if len(args) != 2 {
-		return nil, fmt.Errorf("expected 2 arguments, got: %d", len(args))
+		return nil, fmt.Errorf("%w: expected 2 arguments, got: %d", errscm.ErrUnexpectedNumberOfArguments, len(args))
 	}
 
 	a, ok := args[0].(*types.Number)
 	if !ok {
-		return nil, errors.New("not a number")
+		return nil, errscm.ErrNaN
 	}
 	b := args[1]
 	result, err := a.ApplyOperation(operator.Division, b)

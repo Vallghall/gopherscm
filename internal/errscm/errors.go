@@ -1,4 +1,4 @@
-package lexer
+package errscm
 
 import (
 	"errors"
@@ -38,9 +38,13 @@ var (
 	ErrMissingMatchingDoubleQuotes = errors.New("missing matching double quotes")
 	ErrInvalidNumericLiteral       = errors.New("invalid numeric literal")
 	ErrInvalidSymbol               = errors.New("invalid symbol")
-	ErrFreeClosingParantesis       = errors.New("free closing parenthesis")
+	ErrFreeClosingParenthesis      = errors.New("free closing parenthesis")
 	ErrMissingClosingParenthesis   = errors.New("missing matching closing parenthesis")
 	ErrNaN                         = errors.New("NaN")
 	ErrUnexpectedLineBreak         = errors.New("unexpected line break")
-	ErrUnexpectedDotSymblol        = errors.New("unexpected dot symbol")
+	ErrUnexpectedDotSymbol         = errors.New("unexpected dot symbol")
+
+	ErrUnexpectedNumberOfArguments = errors.New("unexpected number of arguments")
+	ErrTooLittleArguments          = errors.New("too little arguments")
+	ErrUnsupported                 = errors.New("unsupported")
 )

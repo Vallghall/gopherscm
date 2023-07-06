@@ -2,6 +2,7 @@ package stdio
 
 import (
 	"fmt"
+	"github.com/Vallghall/gopherscm/internal/errscm"
 
 	"github.com/Vallghall/gopherscm/internal/core/types"
 )
@@ -21,7 +22,7 @@ func (p IOHandler) Value() any {
 // Display - prints given args to stdout
 func Display(args ...types.Object) (types.Object, error) {
 	if len(args) != 1 {
-		return nil, fmt.Errorf("expected 1 arg, got %d", len(args))
+		return nil, fmt.Errorf("%w: expected 1 arg, got %d", errscm.ErrUnexpectedNumberOfArguments, len(args))
 	}
 
 	fmt.Print(args[0])
@@ -39,7 +40,7 @@ func NewLine(args ...types.Object) (types.Object, error) {
 // a new line character at the end
 func Displayln(args ...types.Object) (types.Object, error) {
 	if len(args) != 1 {
-		return nil, fmt.Errorf("expected 1 arg, got %d", len(args))
+		return nil, fmt.Errorf("%w: expected 1 arg, got %d", errscm.ErrUnexpectedNumberOfArguments, len(args))
 	}
 
 	fmt.Println(args[0])
