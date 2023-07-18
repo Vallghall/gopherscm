@@ -18,6 +18,7 @@ const (
 	Int
 	Float
 	String
+	Quote
 )
 
 func (t Type) MarshalJSON() ([]byte, error) {
@@ -32,6 +33,8 @@ func (t Type) MarshalJSON() ([]byte, error) {
 		return json.Marshal("Float")
 	case String:
 		return json.Marshal("String")
+	case Quote:
+		return json.Marshal("Quote")
 	default:
 		return nil, ErrUnsupportedTokenType
 	}

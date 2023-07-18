@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/Vallghall/gopherscm/internal/interp"
 	"github.com/Vallghall/gopherscm/internal/lexer"
 	"github.com/Vallghall/gopherscm/internal/parser"
 )
@@ -45,7 +46,7 @@ func main() {
 		writeIntermediateResults("parse", ast)
 	}
 
-	_, err = ast.Eval()
+	_, err = interp.Walk(ast)
 	if err != nil {
 		log.Fatalln(err)
 	}

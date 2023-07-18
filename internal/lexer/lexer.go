@@ -2,8 +2,9 @@ package lexer
 
 import (
 	"errors"
-	"github.com/Vallghall/gopherscm/internal/errscm"
 	"unicode"
+
+	"github.com/Vallghall/gopherscm/internal/errscm"
 
 	"github.com/Vallghall/gopherscm/internal/data"
 )
@@ -64,6 +65,13 @@ func Tokenize(cursor int, src []rune, m *data.Meta) (int, *data.Token, error) {
 	}
 
 	sym := src[cursor]
+
+	// \' is a special sugar for `quote`` builtin func
+	if sym == '\'' {
+		t := data.TokenFromMeta(m)
+		m.Inc()
+		return cursor + 1, t.Set(data.Quote, sym), nil
+	}
 
 	// '(' and ')' are the only syntax tokens
 	if sym == '(' || sym == ')' {

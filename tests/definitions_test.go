@@ -2,11 +2,13 @@ package tests
 
 import (
 	"fmt"
+	"math"
+	"testing"
+
+	"github.com/Vallghall/gopherscm/internal/interp"
 	"github.com/Vallghall/gopherscm/internal/lexer"
 	"github.com/Vallghall/gopherscm/internal/parser"
 	"github.com/stretchr/testify/require"
-	"math"
-	"testing"
 )
 
 func TestDefine(t *testing.T) {
@@ -17,11 +19,11 @@ func TestDefine(t *testing.T) {
 	(define pi %v)
 	(* pi r r))
 (area 5)`, math.Pi)
-		
+
 		ts, err := lexer.Lex([]rune(code))
 		require.NoError(t, err)
 
-		result, err := parser.Parse(ts).Eval()
+		result, err := interp.Walk(parser.Parse(ts))
 		require.NoError(t, err)
 
 		expected := math.Pi * 25.0
